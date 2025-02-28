@@ -35,7 +35,7 @@ function getRandomFrame(videoPath, outputPath) {
     });
   });
 }
-  
+
   try {
         const framePath = await getRandomFrame(videoPath, outputPath);
         console.log("Frame guardado en:", framePath)
