@@ -16,8 +16,10 @@ const client = new TwitterApi({
   accessSecret: process.env.ACCESS_SECRET,
 })
 
-const videoPath = path.join(__dirname, 'videos/video1.mp4')
-const outputPath = path.join(__dirname, 'frames')
+const cantCaps = 13
+const outputPath = "E:/LycoRecoResources/frames"
+
+
 
 function getRandomFrame(videoPath, outputPath) {
   return new Promise((resolve, reject) => {
@@ -35,16 +37,17 @@ function getRandomFrame(videoPath, outputPath) {
           folder: outputPath,
           size: '1920x1080',
         })
-        .on('end', () => resolve(path.join(outputPath, filename)))
+        .on('end', () => resolve([randomTime, path.join(outputPath, filename)]))
         .on('error', reject);
     })
   })
 }
 
-async function postTweet(mediaPath) {
+async function postTweet(text, mediaPath) {
   try {
     const mediaId = await client.v1.uploadMedia(mediaPath)
     const tweet = await client.v2.tweet({
+        text: text,
         media: { media_ids: [mediaId] }
       })  
     console.log("Tweet publicado:", tweet)
@@ -55,16 +58,46 @@ async function postTweet(mediaPath) {
 
 // postTweet("soy un tweet", "./images/takina.jfif")
 
+function getRandomChapter(){
+  const randomCapNum = Math.floor(Math.random() * cantCaps)
+  const capPath = `E:/LycoRecoResources/videos/chapter${randomCapNum}.mkv`
+  return [randomCapNum, capPath]
+}
+function secondsToTimeFormat(totalSeconds){
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = Math.floor(totalSeconds % 60)
+  return `${minutes}:${seconds}`
+}
 async function postTodosLosDias(){
 try {
-  const framePath = await getRandomFrame(videoPath, outputPath);
-  console.log("Frame guardado en:", framePath)
-  postTweet(framePath)
+  const selectedChapter = getRandomChapter()
+  const chapterNum = selectedChapter[0]
+  const videoPath = selectedChapter[1]
+
+  const selectedFrame = await getRandomFrame(videoPath, outputPath)
+  const frameTime = secondsToTimeFormat(selectedFrame[0])
+  // const frameTime = selectedFrame[0]
+  const framePath = selectedFrame[1]
+  const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
+  console.log(textPost)
+  postTweet(textPost, framePath)
 } catch (error) {
   console.error(error)
 }
 }
-// setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
 
-  
-  
+
+
+//set timeout (las 00 - now){  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))  }
+const now = new Date()
+const las00 = new Date()
+las00.setHours(24, 0, 0, 0)
+const dateDiff = las00 - now
+
+setTimeout(() => {
+  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
+}, dateDiff)
+
+// setInterval(postTodosLosDias, (10 * 1000))
+
+
