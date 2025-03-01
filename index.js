@@ -2,12 +2,12 @@ import { TwitterApi } from 'twitter-api-v2'
 import ffmpegStatic from 'ffmpeg-static'
 import ffmpeg from 'fluent-ffmpeg'
 import ffprobe from '@ffprobe-installer/ffprobe'
-ffmpeg.setFfmpegPath(ffmpegStatic)
-ffmpeg.setFfprobePath(ffprobe.path)
-
 import { fileURLToPath } from 'url'
 import path from "path"
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+ffmpeg.setFfmpegPath(ffmpegStatic)
+ffmpeg.setFfprobePath(ffprobe.path)
 
 const client = new TwitterApi({
   appKey: process.env.API_KEY,
@@ -18,8 +18,6 @@ const client = new TwitterApi({
 
 const cantCaps = 13
 const outputPath = "E:/LycoRecoResources/frames"
-
-
 
 function getRandomFrame(videoPath, outputPath) {
   return new Promise((resolve, reject) => {
@@ -86,18 +84,16 @@ try {
 }
 }
 
-
-
 //set timeout (las 00 - now){  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))  }
 const now = new Date()
-const las00 = new Date()
-las00.setHours(24, 0, 0, 0)
-const dateDiff = las00 - now
+const horaDePosteo = new Date()
+//postea a las 19hs
+horaDePosteo.setHours(19, 0, 0, 0)
+const dateDiff = horaDePosteo - now
 
 setTimeout(() => {
   setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
 }, dateDiff)
 
 // setInterval(postTodosLosDias, (10 * 1000))
-
 
