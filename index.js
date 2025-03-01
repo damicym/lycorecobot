@@ -5,6 +5,10 @@ import ffprobe from '@ffprobe-installer/ffprobe'
 import { fileURLToPath } from 'url'
 import path from "path"
 
+import dotenv from 'dotenv';
+dotenv.config();
+
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 ffmpeg.setFfmpegPath(ffmpegStatic)
 ffmpeg.setFfprobePath(ffprobe.path)
