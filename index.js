@@ -31,8 +31,9 @@ function getRandomFrame(videoPath, outputPath) {
       const duration = metadata.format.duration
       const randomTime = Math.random() * duration
       const now = new Date()
-      const filename = `frame-${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}.png`
+      const filename = `frame-${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}.jpg`
       ffmpeg(videoPath)
+      .outputOptions(['-q:v 5'])
         .screenshots({
           timestamps: [randomTime],
           filename: filename,
@@ -71,28 +72,28 @@ function secondsToTimeFormat(totalSeconds){
   return `${minutes}:${seconds}`
 }
 async function postTodosLosDias(){
-try {
-  const selectedChapter = getRandomChapter()
-  const chapterNum = selectedChapter[0]
-  const videoPath = selectedChapter[1]
+  try {
+    const selectedChapter = getRandomChapter()
+    const chapterNum = selectedChapter[0]
+    const videoPath = selectedChapter[1]
 
-  const selectedFrame = await getRandomFrame(videoPath, outputPath)
-  const frameTime = secondsToTimeFormat(selectedFrame[0])
-  // const frameTime = selectedFrame[0]
-  const framePath = selectedFrame[1]
-  const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
-  console.log(textPost)
-  postTweet(textPost, framePath)
-} catch (error) {
-  console.error(error)
-}
+    const selectedFrame = await getRandomFrame(videoPath, outputPath)
+    const frameTime = secondsToTimeFormat(selectedFrame[0])
+    // const frameTime = selectedFrame[0]
+    const framePath = selectedFrame[1]
+    const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
+    console.log(textPost)
+    postTweet(textPost, framePath)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 //set timeout (las 00 - now){  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))  }
 const now = new Date()
 const horaDePosteo = new Date()
 //postea a las 19hs
-horaDePosteo.setHours(19, 0, 0, 0)
+horaDePosteo.setHours(22, 8, 0, 0)
 const dateDiff = horaDePosteo - now
 
 setTimeout(() => {
@@ -101,3 +102,4 @@ setTimeout(() => {
 
 // setInterval(postTodosLosDias, (10 * 1000))
 
+// postTodosLosDias()
