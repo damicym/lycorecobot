@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@pm2/io": "^6.1.0",
     "dotenv": "^16.4.7",
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.3",

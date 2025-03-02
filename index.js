@@ -5,10 +5,11 @@ import ffprobe from '@ffprobe-installer/ffprobe'
 import { fileURLToPath } from 'url'
 import path from "path"
 import dotenv from 'dotenv'
-//estas 3 cosas de abajo son para el pm2 trigger
+//estas 4 cosas de abajo son para el pm2 trigger
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const { exec } = require("child_process");
+const pmx = require('@pm2/io');
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 ffmpeg.setFfmpegPath(ffmpegStatic)
@@ -68,8 +69,10 @@ function getRandomChapter(){
   return [randomCapNum, capPath]
 }
 function secondsToTimeFormat(totalSeconds){
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = Math.floor(totalSeconds % 60)
+  let minutes = Math.floor(totalSeconds / 60)
+  let seconds = Math.floor(totalSeconds % 60)
+  minutes = String(minutes).padStart(2, "0")
+  seconds = String(seconds).padStart(2, "0")
   return `${minutes}:${seconds}`
 }
 async function postTodosLosDias(){
@@ -105,9 +108,11 @@ setTimeout(() => {
 
 //pm2 trigger command: pm2 trigger pm2-bot-process SIGUSR2 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
-process.on("SIGUSR2", () => {
-  console.log("Ejecutando postTodosLosDias manualmente...")
-  postTodosLosDias()
-})
+pmx.action('postNow', async (reply) => {
+  console.log('Ejecutando postTodosLosDias manualmente...');
+  await postTodosLosDias();
+  reply({ success: true });
+});
+
 
 
