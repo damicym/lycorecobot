@@ -93,13 +93,13 @@ async function postTodosLosDias(){
 const now = new Date()
 const horaDePosteo = new Date()
 //postea a las 19hs
-horaDePosteo.setHours(22, 8, 0, 0)
+horaDePosteo.setHours(19, 0, 0, 0)
 const dateDiff = horaDePosteo - now
 
 setTimeout(() => {
+  postTodosLosDias()
   setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
 }, dateDiff)
 
 // setInterval(postTodosLosDias, (10 * 1000))
 
-// postTodosLosDias()
