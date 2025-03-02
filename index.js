@@ -106,13 +106,10 @@ setTimeout(() => {
   setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
 }, dateDiff)
 
-//pm2 trigger command: pm2 trigger pm2-bot-process SIGUSR2 
+//pm2 trigger command: pm2 trigger pm2-bot-process postNow 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
 pmx.action('postNow', async (reply) => {
   console.log('Ejecutando postTodosLosDias manualmente...');
   await postTodosLosDias();
   reply({ success: true });
 });
-
-
-
