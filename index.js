@@ -4,11 +4,12 @@ import ffmpeg from 'fluent-ffmpeg'
 import ffprobe from '@ffprobe-installer/ffprobe'
 import { fileURLToPath } from 'url'
 import path from "path"
-
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'
+//estas 3 cosas de abajo son para el pm2 trigger
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { exec } = require("child_process");
 dotenv.config();
-
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 ffmpeg.setFfmpegPath(ffmpegStatic)
 ffmpeg.setFfprobePath(ffprobe.path)
@@ -79,7 +80,6 @@ async function postTodosLosDias(){
 
     const selectedFrame = await getRandomFrame(videoPath, outputPath)
     const frameTime = secondsToTimeFormat(selectedFrame[0])
-    // const frameTime = selectedFrame[0]
     const framePath = selectedFrame[1]
     const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
     console.log(textPost)
@@ -89,11 +89,13 @@ async function postTodosLosDias(){
   }
 }
 
-//set timeout (las 00 - now){  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))  }
 const now = new Date()
 const horaDePosteo = new Date()
 //postea a las 19hs
 horaDePosteo.setHours(19, 0, 0, 0)
+if (horaDePosteo <= now) {
+  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+}
 const dateDiff = horaDePosteo - now
 
 setTimeout(() => {
@@ -101,5 +103,11 @@ setTimeout(() => {
   setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
 }, dateDiff)
 
-// setInterval(postTodosLosDias, (10 * 1000))
+//pm2 trigger command: pm2 trigger pm2-bot-process SIGUSR2 
+//pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
+process.on("SIGUSR2", () => {
+  console.log("Ejecutando postTodosLosDias manualmente...")
+  postTodosLosDias()
+})
+
 
