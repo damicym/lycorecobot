@@ -102,9 +102,18 @@ if (horaDePosteo <= now) {
 const dateDiff = horaDePosteo - now
 
 setTimeout(() => {
-  postTodosLosDias()
-  setInterval(postTodosLosDias, (24 * 60 * 60 * 1000))
+  postearVarios()
+  setInterval(postearVarios, (24 * 60 * 60 * 1000))
 }, dateDiff)
+
+
+function postearVarios(){
+  const tiempoDePosteo = 2 * 60 * 60 * 1000 //2h
+  const tiempoEntrePosteo = 10 * 60 * 1000 //10m
+  postTodosLosDias()
+  const postInterval = setInterval(postTodosLosDias, tiempoEntrePosteo)
+  setTimeout(() => clearInterval(postInterval), tiempoDePosteo)
+}
 
 //pm2 trigger command: pm2 trigger pm2-bot-process postNow 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
