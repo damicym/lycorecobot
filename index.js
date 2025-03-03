@@ -122,3 +122,10 @@ pmx.action('postNow', async (reply) => {
   await postTodosLosDias();
   reply({ success: true });
 });
+
+//pm2 trigger pm2-bot-process postVarios 
+pmx.action('postVarios', async (reply) => {
+  console.log('Ejecutando postTodosLosDias manualmente...');
+  postearVarios();
+  reply({ success: true });
+});
