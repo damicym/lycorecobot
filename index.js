@@ -94,26 +94,46 @@ async function postTodosLosDias(){
 
 const now = new Date()
 const horaDePosteo = new Date()
-//postea a las 19hs
-horaDePosteo.setHours(19, 0, 0, 0)
-if (horaDePosteo <= now) {
-  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-}
-const dateDiff = horaDePosteo - now
 
+//postea a las 19hs:
+// horaDePosteo.setHours(19, 0, 0, 0)
+// que si se pasa de la hora, sea al dia siguiente (sirve para intervalos de 24hs o muchas horas)
+// if (horaDePosteo <= now) {
+//   horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+// }
+
+//postear cada 30mins
+horaDePosteo.setHours(0, 0, 0, 0)
+if (now.getMinutes() < 30) {
+  horaDePosteo.setHours(now.getHours(), 30, 0, 0)
+} else {
+  if (now.getHours() === 23) {
+    horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+    horaDePosteo.setHours(0, 0, 0, 0)
+  } else {
+    horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
+  }
+}
+
+const dateDiff = horaDePosteo - now
+const tiempoEntrePosteo = 30 * 60 * 1000
 setTimeout(() => {
-  postearVarios()
-  setInterval(postearVarios, (24 * 60 * 60 * 1000))
+  postTodosLosDias()
+  setInterval(postTodosLosDias, tiempoEntrePosteo)
 }, dateDiff)
 
-
-function postearVarios(){
-  const tiempoDePosteo = 2 * 60 * 60 * 1000 //2h
-  const tiempoEntrePosteo = 10 * 60 * 1000 //10m
-  postTodosLosDias()
-  const postInterval = setInterval(postTodosLosDias, tiempoEntrePosteo)
-  setTimeout(() => clearInterval(postInterval), tiempoDePosteo)
-}
+//cada 24hs postee cada 10 mins:
+// setTimeout(() => {
+//   postearVarios()
+//   setInterval(postearVarios, (24 * 60 * 60 * 1000))
+// }, dateDiff)
+// function postearVarios(){
+//   const tiempoDePosteo = 2 * 60 * 60 * 1000 //2h
+//   const tiempoEntrePosteo = 10 * 60 * 1000 //10m
+//   postTodosLosDias()
+//   const postInterval = setInterval(postTodosLosDias, tiempoEntrePosteo)
+//   setTimeout(() => clearInterval(postInterval), tiempoDePosteo)
+// }
 
 //pm2 trigger command: pm2 trigger pm2-bot-process postNow 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
@@ -124,8 +144,8 @@ pmx.action('postNow', async (reply) => {
 });
 
 //pm2 trigger pm2-bot-process postVarios 
-pmx.action('postVarios', async (reply) => {
-  console.log('Ejecutando postTodosLosDias manualmente...');
-  postearVarios();
-  reply({ success: true });
-});
+// pmx.action('postVarios', async (reply) => {
+//   console.log('Ejecutando postTodosLosDias manualmente...');
+//   postearVarios();
+//   reply({ success: true });
+// });
