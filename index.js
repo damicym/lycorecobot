@@ -64,7 +64,7 @@ async function postTweet(text, mediaPath) {
 // postTweet("soy un tweet", "./images/takina.jfif")
 
 function getRandomChapter(){
-  const randomCapNum = Math.floor(Math.random() * cantCaps)
+  const randomCapNum = Math.floor(Math.random() * cantCaps) + 1
   const capPath = `E:/LycoRecoResources/videos/chapter${randomCapNum}.mkv`
   return [randomCapNum, capPath]
 }
