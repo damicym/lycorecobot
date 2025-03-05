@@ -92,14 +92,15 @@ const horaDePosteo = new Date()
 horaDePosteo.setHours(0, 0, 0, 0)
 
 //postear cada 3hs:
+//objetivo: sumarle las horas necesarias para que sea multiplo de 3
 let restoHoras = now.getHours() % 3
-if (restoHoras === 0) restoHoras = 3
+let horasRestantes = 3 - restoHoras
 
 if (now.getHours() >= 20) {
-  horaDePosteo.setDate(horaDePosteo.getDate() + restoHoras)
+  horaDePosteo.setDate(horaDePosteo.getDate() + horasRestantes)
   horaDePosteo.setMinutes(0, 0, 0)
 } else {
-  horaDePosteo.setHours(now.getHours() + restoHoras, 0, 0, 0)
+  horaDePosteo.setHours(now.getHours() + horasRestantes, 0, 0, 0)
 }
 
 const dateDiff = horaDePosteo - now
