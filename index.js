@@ -49,7 +49,7 @@ function getRandomFrame(videoPath, outputPath) {
 }
 
 async function postTweet() {
-  let waitTime = 0
+  // let waitTime = 0
   try {
     const selectedChapter = getRandomChapter()
     const chapterNum = selectedChapter[0]
@@ -71,7 +71,7 @@ async function postTweet() {
       waitTime = (resetTimestamp - currentTime) * 1000
     } else console.error("Error al publicar el tweet (no es 429):", error)
   }
-  return waitTime
+  // return waitTime
 }
 
 function getRandomChapter(){
