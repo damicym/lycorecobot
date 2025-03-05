@@ -48,7 +48,7 @@ function getRandomFrame(videoPath, outputPath) {
   })
 }
 
-async function postTweet() { //text, mediaPath
+async function postTweet() {
   let waitTime = 0
   try {
     const selectedChapter = getRandomChapter()
@@ -74,8 +74,6 @@ async function postTweet() { //text, mediaPath
   return waitTime
 }
 
-// postTweet("soy un tweet", "./images/takina.jfif")
-
 function getRandomChapter(){
   const randomCapNum = Math.floor(Math.random() * cantCaps) + 1
   const capPath = `E:/LycoRecoResources/videos/chapter${randomCapNum}.mkv`
@@ -88,62 +86,28 @@ function secondsToTimeFormat(totalSeconds){
   seconds = String(seconds).padStart(2, "0")
   return `${minutes}:${seconds}`
 }
-// async function postTodosLosDias(){
-//   try {
-//     const selectedChapter = getRandomChapter()
-//     const chapterNum = selectedChapter[0]
-//     const videoPath = selectedChapter[1]
-
-//     const selectedFrame = await getRandomFrame(videoPath, outputPath)
-//     const frameTime = secondsToTimeFormat(selectedFrame[0])
-//     const framePath = selectedFrame[1]
-//     const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
-//     console.log(textPost)
-//     await postTweet(textPost, framePath)
-//   } catch (error) {
-//     console.error(error)
-//   }
-// }
 
 const now = new Date()
 const horaDePosteo = new Date()
 horaDePosteo.setHours(0, 0, 0, 0)
 
-//postear cada 1hs:
-if (now.getHours() === 23) {
-  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-  horaDePosteo.setHours(0, 0, 0, 0)
+//postear cada 3hs:
+let restoHoras = now.getHours() % 3
+if (restoHoras === 0) restoHoras = 3
+
+if (now.getHours() >= 20) {
+  horaDePosteo.setDate(horaDePosteo.getDate() + restoHoras)
+  horaDePosteo.setMinutes(0, 0, 0)
 } else {
-  horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
+  horaDePosteo.setHours(now.getHours() + restoHoras, 0, 0, 0)
 }
+
 const dateDiff = horaDePosteo - now
-const tiempoEntrePosteo = 1 * 60 * 60 * 1000
-
-//objetivo: que postTweet se ejecute solo si waitTime es igual a 0, pero que cuando pase el tiempo de waitTime waitTime se vuelva 0
-
-let waitTime = 0
-setTimeout(async () => {
-  waitTime = await postTweet() // Primero ejecuta postTweet
-  setInterval(async () => {
-    if (waitTime === 0) { // Si waitTime es 0, ejecuta postTweet
-      waitTime = await postTweet()
-    }
-    if (waitTime > 0) { // Si hay tiempo de espera, espera ese tiempo
-      console.log(`Esperando ${waitTime / 1000} segundos...`)
-      await wait(waitTime)
-      waitTime = 0 // Después de esperar, resetear el waitTime
-    }
-  }, tiempoEntrePosteo) // Ejecutar cada 1 hora
+const tiempoEntrePosteo = 3 * 60 * 60 * 1000
+setTimeout(() => {
+  postTweet()
+  setInterval(postTweet, tiempoEntrePosteo)
 }, dateDiff)
-
-
-function wait(waitTime) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true)
-    }, waitTime)
-  })
-}
 
 //pm2 trigger command: pm2 trigger pm2-bot-process postNow 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
@@ -153,38 +117,4 @@ pmx.action('postNow', async (reply) => {
   reply({ success: true })
 })
 
-//postea a las 19hs:
-// horaDePosteo.setHours(19, 0, 0, 0)
-// que si se pasa de la hora, sea al dia siguiente (sirve para intervalos de 24hs o muchas horas)
-// if (horaDePosteo <= now) {
-//   horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-// }
-//postear cada 30mins:
-// if (now.getMinutes() < 30) {
-//   horaDePosteo.setHours(now.getHours(), 30, 0, 0)
-// } else {
-//   if (now.getHours() === 23) {
-//     horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-//     horaDePosteo.setHours(0, 0, 0, 0)
-//   } else {
-//     horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
-//   }
-// }
-//cada 24hs postee cada 10 mins:
-// setTimeout(() => {
-//   postearVarios()
-//   setInterval(postearVarios, (24 * 60 * 60 * 1000))
-// }, dateDiff)
-// function postearVarios(){
-//   const tiempoDePosteo = 2 * 60 * 60 * 1000 //2h
-//   const tiempoEntrePosteo = 10 * 60 * 1000 //10m
-//   postTodosLosDias()
-//   const postInterval = setInterval(postTodosLosDias, tiempoEntrePosteo)
-//   setTimeout(() => clearInterval(postInterval), tiempoDePosteo)
-// }
-//pm2 trigger pm2-bot-process postVarios 
-// pmx.action('postVarios', async (reply) => {
-//   console.log('Ejecutando postTodosLosDias manualmente...')
-//   postearVarios()
-//   reply({ success: true })
-// })
+// postTweet("soy un tweet", "./images/takina.jfif")
