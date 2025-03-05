@@ -65,11 +65,12 @@ async function postTweet() {
     })
     console.log("Tweet publicado:", tweet)
   } catch (error) {
-    if (error.response?.status === 429) {
-      const resetTimestamp = error.response.headers['x-ratelimit-reset']
-      const currentTime = Math.floor(Date.now() / 1000)
-      waitTime = (resetTimestamp - currentTime) * 1000
-    } else console.error("Error al publicar el tweet (no es 429):", error)
+    // if (error.response?.status === 429) {
+    //   const resetTimestamp = error.response.headers['x-ratelimit-reset']
+    //   const currentTime = Math.floor(Date.now() / 1000)
+    //   waitTime = (resetTimestamp - currentTime) * 1000
+    // } else console.error("Error al publicar el tweet (no es 429):", error)
+    console.error("Error al publicar el tweet:", error)
   }
   // return waitTime
 }
