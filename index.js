@@ -96,9 +96,9 @@ horaDePosteo.setHours(0, 0, 0, 0)
 let restoHoras = now.getHours() % 3
 let horasRestantes = 3 - restoHoras
 
-if (now.getHours() >= 20) {
-  horaDePosteo.setDate(horaDePosteo.getDate() + horasRestantes)
-  horaDePosteo.setMinutes(0, 0, 0)
+if (now.getHours() > 20) {
+  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+  horaDePosteo.setHours(now.getHours() + horasRestantes - 24, 0, 0, 0)
 } else {
   horaDePosteo.setHours(now.getHours() + horasRestantes, 0, 0, 0)
 }
