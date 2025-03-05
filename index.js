@@ -49,7 +49,6 @@ function getRandomFrame(videoPath, outputPath) {
 }
 
 async function postTweet() {
-  // let waitTime = 0
   try {
     const selectedChapter = getRandomChapter()
     const chapterNum = selectedChapter[0]
@@ -64,15 +63,16 @@ async function postTweet() {
       media: { media_ids: [mediaId] }
     })
     console.log("Tweet publicado:", tweet)
+    hayRequests = true
   } catch (error) {
-    // if (error.response?.status === 429) {
-    //   const resetTimestamp = error.response.headers['x-ratelimit-reset']
-    //   const currentTime = Math.floor(Date.now() / 1000)
-    //   waitTime = (resetTimestamp - currentTime) * 1000
-    // } else console.error("Error al publicar el tweet (no es 429):", error)
-    console.error("Error al publicar el tweet:", error)
+    if (error.response?.status === 429) {
+      hayRequests = false
+      console.error("No hay requests: ", error)
+    } else {
+      console.error("Error al publicar el tweet (no es 429):", error)
+      hayRequests = true
+    }
   }
-  // return waitTime
 }
 
 function getRandomChapter(){
@@ -89,27 +89,42 @@ function secondsToTimeFormat(totalSeconds){
 }
 
 const now = new Date()
-const horaDePosteo = new Date()
-horaDePosteo.setHours(0, 0, 0, 0)
+const tiempoDePosteo = new Date()
+tiempoDePosteo.setHours(0, 0, 0, 0)
 
-//postear cada 3hs:
-//objetivo: sumarle las horas necesarias para que sea multiplo de 3
-let restoHoras = now.getHours() % 3
-let horasRestantes = 3 - restoHoras
+const horasEntrePosteo = 2
+const restoDivisonHoras = now.getHours() % horasEntrePosteo
+const horasHastaPostear = horasEntrePosteo - restoDivisonHoras
 
-if (now.getHours() > 20) {
-  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-  horaDePosteo.setHours(now.getHours() + horasRestantes - 24, 0, 0, 0)
+if (now.getHours() + horasHastaPostear >= 24) {
+  tiempoDePosteo.setDate(tiempoDePosteo.getDate() + 1)
+  tiempoDePosteo.setHours(now.getHours() + horasHastaPostear - 24, 0, 0, 0)
 } else {
-  horaDePosteo.setHours(now.getHours() + horasRestantes, 0, 0, 0)
+  tiempoDePosteo.setHours(now.getHours() + horasHastaPostear, 0, 0, 0)
 }
 
-const dateDiff = horaDePosteo - now
-const tiempoEntrePosteo = 3 * 60 * 60 * 1000
-setTimeout(() => {
-  postTweet()
-  setInterval(postTweet, tiempoEntrePosteo)
+const dateDiff = tiempoDePosteo - now
+const tiempoEntrePosteo = horasEntrePosteo * 60 * 60 * 1000
+let hayRequests = true
+setTimeout(async () => {
+  await postTweet()
+  setInterval(async () => {
+    if (!hayRequests) {
+      await wait(12 * 60 * 60 * 1000);
+      hayRequests = true;
+    } else {
+      await postTweet();
+    }
+  }, tiempoEntrePosteo)
 }, dateDiff)
+
+function wait(waitTime) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(true)
+    }, waitTime)
+  })
+}
 
 //pm2 trigger command: pm2 trigger pm2-bot-process postNow 
 //pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
