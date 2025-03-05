@@ -6,11 +6,11 @@ import { fileURLToPath } from 'url'
 import path from "path"
 import dotenv from 'dotenv'
 //estas 4 cosas de abajo son para el pm2 trigger
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const { exec } = require("child_process");
-const pmx = require('@pm2/io');
-dotenv.config();
+import { createRequire } from "module"
+const require = createRequire(import.meta.url)
+const { exec } = require("child_process")
+const pmx = require('@pm2/io')
+dotenv.config()
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 ffmpeg.setFfmpegPath(ffmpegStatic)
 ffmpeg.setFfprobePath(ffprobe.path)
@@ -43,22 +43,35 @@ function getRandomFrame(videoPath, outputPath) {
           size: '1920x1080',
         })
         .on('end', () => resolve([randomTime, path.join(outputPath, filename)]))
-        .on('error', reject);
+        .on('error', reject)
     })
   })
 }
 
-async function postTweet(text, mediaPath) {
+async function postTweet() { //text, mediaPath
+  let waitTime = 0
   try {
-    const mediaId = await client.v1.uploadMedia(mediaPath)
+    const selectedChapter = getRandomChapter()
+    const chapterNum = selectedChapter[0]
+    const videoPath = selectedChapter[1]
+    const selectedFrame = await getRandomFrame(videoPath, outputPath)
+    const frameTime = secondsToTimeFormat(selectedFrame[0])
+    const framePath = selectedFrame[1]
+    const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
+    const mediaId = await client.v1.uploadMedia(framePath)
     const tweet = await client.v2.tweet({
-        text: text,
-        media: { media_ids: [mediaId] }
-      })  
+      text: textPost,
+      media: { media_ids: [mediaId] }
+    })
     console.log("Tweet publicado:", tweet)
   } catch (error) {
-    console.error("Error al publicar el tweet:", error)
+    if (error.response?.status === 429) {
+      const resetTimestamp = error.response.headers['x-ratelimit-reset']
+      const currentTime = Math.floor(Date.now() / 1000)
+      waitTime = (resetTimestamp - currentTime) * 1000
+    } else console.error("Error al publicar el tweet (no es 429):", error)
   }
+  return waitTime
 }
 
 // postTweet("soy un tweet", "./images/takina.jfif")
@@ -75,25 +88,70 @@ function secondsToTimeFormat(totalSeconds){
   seconds = String(seconds).padStart(2, "0")
   return `${minutes}:${seconds}`
 }
-async function postTodosLosDias(){
-  try {
-    const selectedChapter = getRandomChapter()
-    const chapterNum = selectedChapter[0]
-    const videoPath = selectedChapter[1]
+// async function postTodosLosDias(){
+//   try {
+//     const selectedChapter = getRandomChapter()
+//     const chapterNum = selectedChapter[0]
+//     const videoPath = selectedChapter[1]
 
-    const selectedFrame = await getRandomFrame(videoPath, outputPath)
-    const frameTime = secondsToTimeFormat(selectedFrame[0])
-    const framePath = selectedFrame[1]
-    const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
-    console.log(textPost)
-    postTweet(textPost, framePath)
-  } catch (error) {
-    console.error(error)
-  }
-}
+//     const selectedFrame = await getRandomFrame(videoPath, outputPath)
+//     const frameTime = secondsToTimeFormat(selectedFrame[0])
+//     const framePath = selectedFrame[1]
+//     const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
+//     console.log(textPost)
+//     await postTweet(textPost, framePath)
+//   } catch (error) {
+//     console.error(error)
+//   }
+// }
 
 const now = new Date()
 const horaDePosteo = new Date()
+horaDePosteo.setHours(0, 0, 0, 0)
+
+//postear cada 1hs:
+if (now.getHours() === 23) {
+  horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+  horaDePosteo.setHours(0, 0, 0, 0)
+} else {
+  horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
+}
+const dateDiff = horaDePosteo - now
+const tiempoEntrePosteo = 1 * 60 * 60 * 1000
+
+//objetivo: que postTweet se ejecute solo si waitTime es igual a 0, pero que cuando pase el tiempo de waitTime waitTime se vuelva 0
+
+let waitTime = 0
+setTimeout(async () => {
+  waitTime = await postTweet() // Primero ejecuta postTweet
+  setInterval(async () => {
+    if (waitTime === 0) { // Si waitTime es 0, ejecuta postTweet
+      waitTime = await postTweet()
+    }
+    if (waitTime > 0) { // Si hay tiempo de espera, espera ese tiempo
+      console.log(`Esperando ${waitTime / 1000} segundos...`)
+      await wait(waitTime)
+      waitTime = 0 // Después de esperar, resetear el waitTime
+    }
+  }, tiempoEntrePosteo) // Ejecutar cada 1 hora
+}, dateDiff)
+
+
+function wait(waitTime) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(true)
+    }, waitTime)
+  })
+}
+
+//pm2 trigger command: pm2 trigger pm2-bot-process postNow 
+//pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
+pmx.action('postNow', async (reply) => {
+  console.log('Ejecutando postTweet manualmente...')
+  await postTweet()
+  reply({ success: true })
+})
 
 //postea a las 19hs:
 // horaDePosteo.setHours(19, 0, 0, 0)
@@ -101,27 +159,17 @@ const horaDePosteo = new Date()
 // if (horaDePosteo <= now) {
 //   horaDePosteo.setDate(horaDePosteo.getDate() + 1)
 // }
-
-//postear cada 30mins
-horaDePosteo.setHours(0, 0, 0, 0)
-if (now.getMinutes() < 30) {
-  horaDePosteo.setHours(now.getHours(), 30, 0, 0)
-} else {
-  if (now.getHours() === 23) {
-    horaDePosteo.setDate(horaDePosteo.getDate() + 1)
-    horaDePosteo.setHours(0, 0, 0, 0)
-  } else {
-    horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
-  }
-}
-
-const dateDiff = horaDePosteo - now
-const tiempoEntrePosteo = 30 * 60 * 1000
-setTimeout(() => {
-  postTodosLosDias()
-  setInterval(postTodosLosDias, tiempoEntrePosteo)
-}, dateDiff)
-
+//postear cada 30mins:
+// if (now.getMinutes() < 30) {
+//   horaDePosteo.setHours(now.getHours(), 30, 0, 0)
+// } else {
+//   if (now.getHours() === 23) {
+//     horaDePosteo.setDate(horaDePosteo.getDate() + 1)
+//     horaDePosteo.setHours(0, 0, 0, 0)
+//   } else {
+//     horaDePosteo.setHours(now.getHours() + 1, 0, 0, 0)
+//   }
+// }
 //cada 24hs postee cada 10 mins:
 // setTimeout(() => {
 //   postearVarios()
@@ -134,18 +182,9 @@ setTimeout(() => {
 //   const postInterval = setInterval(postTodosLosDias, tiempoEntrePosteo)
 //   setTimeout(() => clearInterval(postInterval), tiempoDePosteo)
 // }
-
-//pm2 trigger command: pm2 trigger pm2-bot-process postNow 
-//pm2-bot-process refiriendose al nombre del proceso, puede ser cambiado por el índice del mismo
-pmx.action('postNow', async (reply) => {
-  console.log('Ejecutando postTodosLosDias manualmente...');
-  await postTodosLosDias();
-  reply({ success: true });
-});
-
 //pm2 trigger pm2-bot-process postVarios 
 // pmx.action('postVarios', async (reply) => {
-//   console.log('Ejecutando postTodosLosDias manualmente...');
-//   postearVarios();
-//   reply({ success: true });
-// });
+//   console.log('Ejecutando postTodosLosDias manualmente...')
+//   postearVarios()
+//   reply({ success: true })
+// })
