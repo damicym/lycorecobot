@@ -49,7 +49,8 @@ function getRandomFrame(videoPath, outputPath) {
 }
 
 async function postTweet() {
-  console.log(`postTweet se ejecutó, horario: [${now}] (puede que no haya funcionado)`)
+  const horario = new Date()
+  console.log(`postTweet se ejecutó, horario: [${horario}] (puede que no haya funcionado)`)
   try {
     const selectedChapter = getRandomChapter()
     const chapterNum = selectedChapter[0]
@@ -89,6 +90,7 @@ function secondsToTimeFormat(totalSeconds){
   return `${minutes}:${seconds}`
 }
 
+let hayRequests = true
 const horasEntrePosteo = 2
 let now = new Date()
 setInterval(async () => {
