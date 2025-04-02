@@ -95,7 +95,7 @@ const horasEntrePosteo = 2
 let now = new Date()
 setInterval(async () => {
   now = new Date()
-  if (now.getHours() % horasEntrePosteo === 0) {
+  if (now.getHours() % horasEntrePosteo === 0 && now.getMinutes === 0) {
     if (hayRequests) {
       await postTweet()
     } else {
