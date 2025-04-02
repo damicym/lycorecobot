@@ -49,6 +49,7 @@ function getRandomFrame(videoPath, outputPath) {
 }
 
 async function postTweet() {
+  console.log(`postTweet se ejecutó, horario: [${now}] (puede que no haya funcionado)`)
   try {
     const selectedChapter = getRandomChapter()
     const chapterNum = selectedChapter[0]
@@ -88,35 +89,19 @@ function secondsToTimeFormat(totalSeconds){
   return `${minutes}:${seconds}`
 }
 
-const now = new Date()
-const tiempoDePosteo = new Date()
-tiempoDePosteo.setHours(0, 0, 0, 0)
-
 const horasEntrePosteo = 2
-const restoDivisonHoras = now.getHours() % horasEntrePosteo
-const horasHastaPostear = horasEntrePosteo - restoDivisonHoras
-
-if (now.getHours() + horasHastaPostear >= 24) {
-  tiempoDePosteo.setDate(tiempoDePosteo.getDate() + 1)
-  tiempoDePosteo.setHours(now.getHours() + horasHastaPostear - 24, 0, 0, 0)
-} else {
-  tiempoDePosteo.setHours(now.getHours() + horasHastaPostear, 0, 0, 0)
-}
-
-const dateDiff = tiempoDePosteo - now
-const tiempoEntrePosteo = horasEntrePosteo * 60 * 60 * 1000
-let hayRequests = true
-setTimeout(async () => {
-  await postTweet()
-  setInterval(async () => {
-    if (!hayRequests) {
-      await wait(12 * 60 * 60 * 1000);
-      hayRequests = true;
+let now = new Date()
+setInterval(async () => {
+  now = new Date()
+  if (now.getHours() % horasEntrePosteo === 0) {
+    if (hayRequests) {
+      await postTweet()
     } else {
-      await postTweet();
+      await wait(12 * 60 * 60 * 1000)
+      hayRequests = true
     }
-  }, tiempoEntrePosteo)
-}, dateDiff)
+  }
+}, 60 * 1000) //cada minuto se fija si postea
 
 function wait(waitTime) {
   return new Promise(resolve => {
