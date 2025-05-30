@@ -7,6 +7,7 @@ import path from "path"
 import dotenv from 'dotenv'
 //estas 4 cosas de abajo son para el pm2 trigger
 import { createRequire } from "module"
+import fs from 'fs';
 const require = createRequire(import.meta.url)
 const { exec } = require("child_process")
 const pmx = require('@pm2/io')
@@ -22,7 +23,11 @@ const client = new TwitterApi({
   accessSecret: process.env.ACCESS_SECRET,
 })
 
-const cantCaps = 13
+const carpetaVideos = 'E:/LycoRecoResources/videos'
+const extensionesValidas = ['.mkv']
+const archivos = fs.readdirSync(carpetaVideos)
+const videos = archivos.filter(file => extensionesValidas.includes(path.extname(file).toLowerCase()))
+const cantCaps = videos.length
 const outputPath = "E:/LycoRecoResources/frames"
 
 function getRandomFrame(videoPath, outputPath) {
@@ -79,7 +84,7 @@ async function postTweet() {
 
 function getRandomChapter(){
   const randomCapNum = Math.floor(Math.random() * cantCaps) + 1
-  const capPath = `E:/LycoRecoResources/videos/chapter${randomCapNum}.mkv`
+  const capPath = `${carpetaVideos}/chapter${randomCapNum}.mkv`
   return [randomCapNum, capPath]
 }
 function secondsToTimeFormat(totalSeconds){
