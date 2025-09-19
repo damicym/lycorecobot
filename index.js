@@ -23,12 +23,13 @@ const client = new TwitterApi({
   accessSecret: process.env.ACCESS_SECRET,
 })
 
-const carpetaVideos = 'E:/LycoRecoResources/videos'
+const carpetaRaiz = 'C:/Mis cosas/LycoRecoResources'
+const carpetaVideos = `${carpetaRaiz}/videos`
 const extensionesValidas = ['.mkv']
 const archivos = fs.readdirSync(carpetaVideos)
 const videos = archivos.filter(file => extensionesValidas.includes(path.extname(file).toLowerCase()))
 const cantCaps = videos.length
-const outputPath = "E:/LycoRecoResources/frames"
+const outputPath = `${carpetaRaiz}/frames`
 
 function getRandomFrame(videoPath, outputPath) {
   return new Promise((resolve, reject) => {
