@@ -13,8 +13,19 @@ const { exec } = require("child_process")
 const pmx = require('@pm2/io')
 dotenv.config()
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const carpetaResources = 'C:/Mis cosas/dependencias/LycoRecoResources'
+const carpetaVideos = `${carpetaResources}/videos`
+const carpetaFramesOutput = `${carpetaResources}/frames`
+const extensionesValidas = ['.mkv', '.mp4']
+
+// const miCarpetaDependencias = 'C:/Mis cosas/dependencias'
 ffmpeg.setFfmpegPath(ffmpegStatic)
+// default sin ocultar CMDs: ffmpegStatic
+// con version de ffmpeg que oculta CMDs (aunque no funciona): `${miCarpetaDependencias}/ffmpeg-8.0.1-full_build/bin/ffmpeg.exe`
 ffmpeg.setFfprobePath(ffprobe.path)
+// default sin ocultar CMDs: ffprobe.path
+// con version de ffmpeg que oculta CMDs (aunque no funciona): `${miCarpetaDependencias}/ffmpeg-8.0.1-full_build/bin/ffprobe.exe`
 
 const client = new TwitterApi({
   appKey: process.env.API_KEY,
@@ -23,13 +34,9 @@ const client = new TwitterApi({
   accessSecret: process.env.ACCESS_SECRET,
 })
 
-const carpetaRaiz = 'C:/Mis cosas/LycoRecoResources'
-const carpetaVideos = `${carpetaRaiz}/videos`
-const extensionesValidas = ['.mkv']
 const archivos = fs.readdirSync(carpetaVideos)
 const videos = archivos.filter(file => extensionesValidas.includes(path.extname(file).toLowerCase()))
-const cantCaps = videos.length
-const outputPath = `${carpetaRaiz}/frames`
+const cantVideos = videos.length
 
 function getRandomFrame(videoPath, outputPath) {
   return new Promise((resolve, reject) => {
@@ -61,7 +68,7 @@ async function postTweet() {
     const selectedChapter = getRandomChapter()
     const chapterNum = selectedChapter[0]
     const videoPath = selectedChapter[1]
-    const selectedFrame = await getRandomFrame(videoPath, outputPath)
+    const selectedFrame = await getRandomFrame(videoPath, carpetaFramesOutput)
     const frameTime = secondsToTimeFormat(selectedFrame[0])
     const framePath = selectedFrame[1]
     const textPost = `Capítulo ${chapterNum}, minuto ${frameTime}` 
@@ -84,7 +91,7 @@ async function postTweet() {
 }
 
 function getRandomChapter(){
-  const randomCapNum = Math.floor(Math.random() * cantCaps) + 1
+  const randomCapNum = Math.floor(Math.random() * cantVideos) + 1
   const capPath = `${carpetaVideos}/chapter${randomCapNum}.mkv`
   return [randomCapNum, capPath]
 }
@@ -95,11 +102,11 @@ function secondsToTimeFormat(totalSeconds){
   seconds = String(seconds).padStart(2, "0")
   return `${minutes}:${seconds}`
 }
-
 let hayRequests = true
-const horasEntrePosteo = 2
 let now = new Date()
-setInterval(async () => {
+
+const horasEntrePosteo = 2
+let postInterval = setInterval(async () => {
   now = new Date()
   if (now.getHours() % horasEntrePosteo === 0 && now.getMinutes() === 0) {
     if (hayRequests) {
