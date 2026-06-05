@@ -1,5 +1,6 @@
 import { TwitterApi } from 'twitter-api-v2'
 import ffmpegStatic from 'ffmpeg-static'
+import ffprobeStatic from 'ffprobe-static'
 import path from "path"
 import dotenv from 'dotenv'
 import fs from 'fs';
@@ -42,7 +43,7 @@ async function getVideoDuration(videoPath) {
     videoPath
   ]
   
-  const { stdout } = await execFilePromise('ffprobe', args, {
+  const { stdout } = await execFilePromise(ffprobeStatic.path, args, {
     windowsHide: true,
     encoding: 'utf8'
   })
