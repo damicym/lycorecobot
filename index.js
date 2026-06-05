@@ -1,31 +1,26 @@
 import { TwitterApi } from 'twitter-api-v2'
 import ffmpegStatic from 'ffmpeg-static'
-import ffmpeg from 'fluent-ffmpeg'
-import ffprobe from '@ffprobe-installer/ffprobe'
-import { fileURLToPath } from 'url'
 import path from "path"
 import dotenv from 'dotenv'
-//estas 4 cosas de abajo son para el pm2 trigger
-import { createRequire } from "module"
 import fs from 'fs';
-const require = createRequire(import.meta.url)
-const { exec } = require("child_process")
-const pmx = require('@pm2/io')
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import pmxIO from '@pm2/io'
+
+const execFilePromise = promisify(execFile)
+
+// Inicializar PM2 IO correctamente
+const pmx = pmxIO.init({
+  network: true,
+  ports: true
+})
+
 dotenv.config()
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const carpetaResources = 'C:/Mis cosas/dependencias/LycoRecoResources'
 const carpetaVideos = `${carpetaResources}/videos`
 const carpetaFramesOutput = `${carpetaResources}/frames`
 const extensionesValidas = ['.mkv', '.mp4']
-
-// const miCarpetaDependencias = 'C:/Mis cosas/dependencias'
-ffmpeg.setFfmpegPath(ffmpegStatic)
-// default sin ocultar CMDs: ffmpegStatic
-// con version de ffmpeg que oculta CMDs (aunque no funciona): `${miCarpetaDependencias}/ffmpeg-8.0.1-full_build/bin/ffmpeg.exe`
-ffmpeg.setFfprobePath(ffprobe.path)
-// default sin ocultar CMDs: ffprobe.path
-// con version de ffmpeg que oculta CMDs (aunque no funciona): `${miCarpetaDependencias}/ffmpeg-8.0.1-full_build/bin/ffprobe.exe`
 
 const client = new TwitterApi({
   appKey: process.env.API_KEY,
@@ -38,26 +33,57 @@ const archivos = fs.readdirSync(carpetaVideos)
 const videos = archivos.filter(file => extensionesValidas.includes(path.extname(file).toLowerCase()))
 const cantVideos = videos.length
 
-function getRandomFrame(videoPath, outputPath) {
-  return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(videoPath, (err, metadata) => {
-      if (err) return reject(err)
+// Función para ejecutar ffprobe sin mostrar ventana
+async function getVideoDuration(videoPath) {
+  const args = [
+    '-v', 'quiet',
+    '-print_format', 'json',
+    '-show_format',
+    videoPath
+  ]
+  
+  const { stdout } = await execFilePromise('ffprobe', args, {
+    windowsHide: true,
+    encoding: 'utf8'
+  })
+  
+  const metadata = JSON.parse(stdout)
+  return parseFloat(metadata.format.duration)
+}
 
-      const duration = metadata.format.duration
+// Función para extraer frame sin mostrar ventana
+async function extractFrame(videoPath, timestamp, outputPath) {
+  const args = [
+    '-ss', timestamp.toString(),
+    '-i', videoPath,
+    '-vframes', '1',
+    '-q:v', '5',
+    '-s', '1920x1080',
+    '-loglevel', 'quiet',
+    outputPath
+  ]
+  
+  await execFilePromise(ffmpegStatic, args, {
+    windowsHide: true
+  })
+  
+  return outputPath
+}
+
+function getRandomFrame(videoPath, outputPath) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const duration = await getVideoDuration(videoPath)
       const randomTime = Math.random() * duration
       const now = new Date()
       const filename = `frame-${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} - ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}.jpg`
-      ffmpeg(videoPath)
-      .outputOptions(['-q:v 5'])
-        .screenshots({
-          timestamps: [randomTime],
-          filename: filename,
-          folder: outputPath,
-          size: '1920x1080',
-        })
-        .on('end', () => resolve([randomTime, path.join(outputPath, filename)]))
-        .on('error', reject)
-    })
+      const fullPath = path.join(outputPath, filename)
+      
+      await extractFrame(videoPath, randomTime, fullPath)
+      resolve([randomTime, fullPath])
+    } catch (err) {
+      reject(err)
+    }
   })
 }
 
